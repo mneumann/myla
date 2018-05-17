@@ -1,4 +1,4 @@
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Token {
     OpenPar,
     ClosePar,
@@ -8,6 +8,15 @@ pub enum Token {
     Keyword(Keyword),
     Ident(String),
     NumLiteral(String),
+}
+
+impl Token {
+    pub fn get_ident_string(self) -> Option<String> {
+        match self {
+            Token::Ident(s) => Some(s),
+            _ => None,
+        }
+    }
 }
 
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
@@ -135,5 +144,3 @@ fn test_tokenizer() {
 
     assert_eq!(&exp_tokens[..], &tokens[..]);
 }
-
-
