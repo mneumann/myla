@@ -61,9 +61,7 @@ impl<'a> TokenStream<'a> {
 }
 
 pub fn parse_expr(token_stream: &mut TokenStream) -> Result<ast::Expr, ParseError> {
-    let tok = token_stream.next().ok_or(ParseError {
-        reason: "exhaused parse_expr".to_string(),
-    })?;
+    let tok = token_stream.expect_next()?;
     match tok {
         Token::NumLiteral(s) => Ok(ast::Expr::NumLiteral(s)),
         _ => Err(ParseError {
