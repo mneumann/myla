@@ -29,10 +29,14 @@ impl<'a> TokenStream<'a> {
         }
     }
 
-    fn expect_next(&mut self, exp: Token) -> Result<(), ParseError> {
-        let tok = self.next().ok_or(ParseError {
+    fn expect_next(&mut self) -> Result<Token, ParseError> {
+        self.next().ok_or(ParseError {
             reason: "premature end".to_string(),
-        })?;
+        })
+    }
+
+    fn expect_next_eql(&mut self, exp: Token) -> Result<(), ParseError> {
+        let tok = self.expect_next()?;
         if tok != exp {
             Err(ParseError {
                 reason: format!("expected token: {:?}. actual: {:?}", exp, tok),
@@ -69,14 +73,14 @@ pub fn parse_expr(token_stream: &mut TokenStream) -> Result<ast::Expr, ParseErro
 }
 
 pub fn parse_statement(token_stream: &mut TokenStream) -> Result<ast::Statement, ParseError> {
-    let _ = token_stream.expect_next(Token::Keyword(Keyword::Return))?;
+    let _ = token_stream.expect_next_eql(Token::Keyword(Keyword::Return))?;
     let expr = parse_expr(token_stream)?;
-    let _ = token_stream.expect_next(Token::Semi)?;
+    let _ = token_stream.expect_next_eql(Token::Semi)?;
     return Ok(ast::Statement::Return(Box::new(expr)));
 }
 
 pub fn parse_block(token_stream: &mut TokenStream) -> Result<ast::Block, ParseError> {
-    let _ = token_stream.expect_next(Token::OpenCur)?;
+    let _ = token_stream.expect_next_eql(Token::OpenCur)?;
     let mut statements = Vec::new();
     loop {
         match token_stream.current().ok_or(ParseError {
@@ -92,33 +96,27 @@ pub fn parse_block(token_stream: &mut TokenStream) -> Result<ast::Block, ParseEr
         }
     }
 
-    let _ = token_stream.expect_next(Token::CloseCur)?;
+    let _ = token_stream.expect_next_eql(Token::CloseCur)?;
 
     Ok(ast::Block { statements })
 }
 
 pub fn parse_function(token_stream: &mut TokenStream) -> Result<ast::Function, ParseError> {
     let return_typename = token_stream
-        .next()
-        .ok_or(ParseError {
-            reason: "premature end".to_string(),
-        })?
+        .expect_next()?
         .get_ident_string()
         .ok_or(ParseError {
             reason: "invalid return typename type".to_string(),
         })?;
     let function_name = token_stream
-        .next()
-        .ok_or(ParseError {
-            reason: "premature end".to_string(),
-        })?
+        .expect_next()?
         .get_ident_string()
         .ok_or(ParseError {
             reason: "invalid function name type".to_string(),
         })?;
 
-    let _ = token_stream.expect_next(Token::OpenPar)?;
-    let _ = token_stream.expect_next(Token::ClosePar)?;
+    let _ = token_stream.expect_next_eql(Token::OpenPar)?;
+    let _ = token_stream.expect_next_eql(Token::ClosePar)?;
     let block = parse_block(token_stream)?;
 
     Ok(ast::Function {
@@ -138,7 +136,7 @@ pub fn parse_program(token_stream: &mut TokenStream) -> Result<ast::Program, Par
         functions.push(parse_function(token_stream)?);
     }
 
-    return Ok((ast::Program { functions }));
+    return Ok(ast::Program { functions });
 }
 
 #[test]
