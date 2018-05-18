@@ -30,7 +30,7 @@ impl<T: Clone> Stream<T> {
         return res;
     }
 
-    fn is_exhausted(&self) -> bool {
+    pub fn is_exhausted(&self) -> bool {
         self.ary.get(self.pos).is_none()
     }
 }

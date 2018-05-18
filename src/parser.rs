@@ -1,4 +1,5 @@
 use ast;
+use stream::Stream;
 use tokenizer::{Keyword, Token};
 
 #[derive(PartialEq, Eq, Debug)]
@@ -6,62 +7,25 @@ pub struct ParseError {
     reason: String,
 }
 
-pub struct TokenStream<'a> {
-    tokens: &'a [Token],
-    current_pos: usize,
+fn expect_next(token_stream: &mut Stream<Token>) -> Result<Token, ParseError> {
+    token_stream.next().ok_or(ParseError {
+        reason: "premature end".to_string(),
+    })
 }
 
-impl<'a> TokenStream<'a> {
-    fn new(tokens: &'a [Token]) -> Self {
-        Self {
-            tokens,
-            current_pos: 0,
-        }
-    }
-
-    fn next(&mut self) -> Option<Token> {
-        if self.is_exhausted() {
-            return None;
-        } else {
-            let token = self.tokens[self.current_pos].clone();
-            self.current_pos += 1;
-            return Some(token);
-        }
-    }
-
-    fn expect_next(&mut self) -> Result<Token, ParseError> {
-        self.next().ok_or(ParseError {
-            reason: "premature end".to_string(),
+fn expect_next_eql(token_stream: &mut Stream<Token>, exp: Token) -> Result<(), ParseError> {
+    let tok = expect_next(token_stream)?;
+    if tok != exp {
+        Err(ParseError {
+            reason: format!("expected token: {:?}. actual: {:?}", exp, tok),
         })
-    }
-
-    fn expect_next_eql(&mut self, exp: Token) -> Result<(), ParseError> {
-        let tok = self.expect_next()?;
-        if tok != exp {
-            Err(ParseError {
-                reason: format!("expected token: {:?}. actual: {:?}", exp, tok),
-            })
-        } else {
-            Ok(())
-        }
-    }
-
-    fn current(&mut self) -> Option<Token> {
-        if self.is_exhausted() {
-            return None;
-        } else {
-            let token = self.tokens[self.current_pos].clone();
-            return Some(token);
-        }
-    }
-
-    fn is_exhausted(&self) -> bool {
-        self.current_pos >= self.tokens.len()
+    } else {
+        Ok(())
     }
 }
 
-pub fn parse_expr(token_stream: &mut TokenStream) -> Result<ast::Expr, ParseError> {
-    let tok = token_stream.expect_next()?;
+pub fn parse_expr(token_stream: &mut Stream<Token>) -> Result<ast::Expr, ParseError> {
+    let tok = expect_next(token_stream)?;
     match tok {
         Token::NumLiteral(s) => Ok(ast::Expr::NumLiteral(s)),
         _ => Err(ParseError {
@@ -70,18 +34,18 @@ pub fn parse_expr(token_stream: &mut TokenStream) -> Result<ast::Expr, ParseErro
     }
 }
 
-pub fn parse_statement(token_stream: &mut TokenStream) -> Result<ast::Statement, ParseError> {
-    let _ = token_stream.expect_next_eql(Token::Keyword(Keyword::Return))?;
+pub fn parse_statement(token_stream: &mut Stream<Token>) -> Result<ast::Statement, ParseError> {
+    let _ = expect_next_eql(token_stream, Token::Keyword(Keyword::Return))?;
     let expr = parse_expr(token_stream)?;
-    let _ = token_stream.expect_next_eql(Token::Semi)?;
+    let _ = expect_next_eql(token_stream, Token::Semi)?;
     return Ok(ast::Statement::Return(Box::new(expr)));
 }
 
-pub fn parse_block(token_stream: &mut TokenStream) -> Result<ast::Block, ParseError> {
-    let _ = token_stream.expect_next_eql(Token::OpenCur)?;
+pub fn parse_block(token_stream: &mut Stream<Token>) -> Result<ast::Block, ParseError> {
+    let _ = expect_next_eql(token_stream, Token::OpenCur)?;
     let mut statements = Vec::new();
     loop {
-        match token_stream.current().ok_or(ParseError {
+        match token_stream.peek().ok_or(ParseError {
             reason: "Premature end".to_string(),
         })? {
             Token::CloseCur => {
@@ -94,27 +58,25 @@ pub fn parse_block(token_stream: &mut TokenStream) -> Result<ast::Block, ParseEr
         }
     }
 
-    let _ = token_stream.expect_next_eql(Token::CloseCur)?;
+    let _ = expect_next_eql(token_stream, Token::CloseCur)?;
 
     Ok(ast::Block { statements })
 }
 
-pub fn parse_function(token_stream: &mut TokenStream) -> Result<ast::Function, ParseError> {
-    let return_typename = token_stream
-        .expect_next()?
+pub fn parse_function(token_stream: &mut Stream<Token>) -> Result<ast::Function, ParseError> {
+    let return_typename = expect_next(token_stream)?
         .get_ident_string()
         .ok_or(ParseError {
             reason: "invalid return typename type".to_string(),
         })?;
-    let function_name = token_stream
-        .expect_next()?
+    let function_name = expect_next(token_stream)?
         .get_ident_string()
         .ok_or(ParseError {
             reason: "invalid function name type".to_string(),
         })?;
 
-    let _ = token_stream.expect_next_eql(Token::OpenPar)?;
-    let _ = token_stream.expect_next_eql(Token::ClosePar)?;
+    let _ = expect_next_eql(token_stream, Token::OpenPar)?;
+    let _ = expect_next_eql(token_stream, Token::ClosePar)?;
     let block = parse_block(token_stream)?;
 
     Ok(ast::Function {
@@ -127,7 +89,7 @@ pub fn parse_function(token_stream: &mut TokenStream) -> Result<ast::Function, P
     })
 }
 
-pub fn parse_program(token_stream: &mut TokenStream) -> Result<ast::Program, ParseError> {
+pub fn parse_program(token_stream: &mut Stream<Token>) -> Result<ast::Program, ParseError> {
     let mut functions = vec![];
 
     while !token_stream.is_exhausted() {
@@ -169,7 +131,7 @@ fn test_parser() {
         ],
     };
 
-    let mut token_stream = TokenStream::new(&tokens[..]);
+    let mut token_stream = Stream::new(tokens);
     let ast = parse_program(&mut token_stream).unwrap();
     assert_eq!(true, token_stream.is_exhausted());
 
