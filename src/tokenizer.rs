@@ -1,3 +1,5 @@
+use stream::Stream;
+
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Token {
     OpenPar,
@@ -5,6 +7,7 @@ pub enum Token {
     OpenCur,
     CloseCur,
     Semi,
+    // XXX: Unify Keyword and Ident into Symbol
     Keyword(Keyword),
     Ident(String),
     NumLiteral(String),
@@ -38,30 +41,29 @@ fn lookup_keyword(ident: &str) -> Option<Keyword> {
 pub fn tokenize(s: &str) -> Vec<Token> {
     let mut tokens = vec![];
 
-    let char_ary: Vec<char> = s.chars().collect();
-    let chars = &char_ary;
-    let mut pos = 0;
+    let mut chars: Stream<char> = Stream::new(s.chars().collect());
+    //let char_ary: Vec<char> = ;
+    //let chars = &char_ary;
+    //let mut pos = 0;
 
     loop {
-        if let Some(&ch) = chars.get(pos) {
+        if let Some(&ch) = chars.peek() {
             if ch.is_whitespace() {
-                pos += 1;
+                chars.skip();
             } else if ch.is_alphabetic() {
-                pos += 1;
                 let mut tok = String::new();
-                tok.push(ch);
                 loop {
-                    if let Some(&ch) = chars.get(pos) {
-                        if ch.is_alphanumeric() {
-                            pos += 1;
+                    match chars.peek() {
+                        Some(&ch) if ch.is_alphanumeric() => {
+                            chars.skip();
                             tok.push(ch);
-                        } else {
+                        }
+                        _ => {
                             break;
                         }
-                    } else {
-                        break;
                     }
                 }
+                assert!(tok.len() > 0);
 
                 tokens.push(
                     lookup_keyword(&tok)
@@ -69,46 +71,45 @@ pub fn tokenize(s: &str) -> Vec<Token> {
                         .unwrap_or(Token::Ident(tok)),
                 );
             } else if ch.is_numeric() {
-                pos += 1;
+                // chars.consume_while(|ch| { ch.is_numeric() })
                 let mut tok = String::new();
-                tok.push(ch);
                 loop {
-                    if let Some(&ch) = chars.get(pos) {
-                        if ch.is_numeric() {
-                            pos += 1;
+                    match chars.peek() {
+                        Some(&ch) if ch.is_numeric() => {
+                            chars.skip();
                             tok.push(ch);
-                        } else {
+                        }
+                        _ => {
                             break;
                         }
-                    } else {
-                        break;
                     }
                 }
+                assert!(tok.len() > 0);
                 tokens.push(Token::NumLiteral(tok));
             } else {
                 match ch {
                     '(' => {
-                        pos += 1;
+                        chars.skip();
                         tokens.push(Token::OpenPar);
                     }
                     ')' => {
-                        pos += 1;
+                        chars.skip();
                         tokens.push(Token::ClosePar);
                     }
                     '{' => {
-                        pos += 1;
+                        chars.skip();
                         tokens.push(Token::OpenCur);
                     }
                     '}' => {
-                        pos += 1;
+                        chars.skip();
                         tokens.push(Token::CloseCur);
                     }
                     ';' => {
-                        pos += 1;
+                        chars.skip();
                         tokens.push(Token::Semi);
                     }
                     _ => {
-                        panic!("invalid character: {} at position: {}", ch, pos);
+                        panic!("invalid character: {} at position: {}", ch, chars.get_pos());
                     }
                 }
             }
