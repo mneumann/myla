@@ -1,6 +1,7 @@
 use ast;
+use keyword::Keyword;
 use stream::Stream;
-use tokenizer::{Keyword, Token};
+use tokenizer::Token;
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct ParseError {
@@ -35,7 +36,7 @@ pub fn parse_expr(token_stream: &mut Stream<Token>) -> Result<ast::Expr, ParseEr
 }
 
 pub fn parse_statement(token_stream: &mut Stream<Token>) -> Result<ast::Statement, ParseError> {
-    let _ = expect_next_eql(token_stream, Token::Keyword(Keyword::Return))?;
+    let _ = expect_next_eql(token_stream, Token::Symbol("return".to_string()))?;
     let expr = parse_expr(token_stream)?;
     let _ = expect_next_eql(token_stream, Token::Semi)?;
     return Ok(ast::Statement::Return(Box::new(expr)));
@@ -65,12 +66,24 @@ pub fn parse_block(token_stream: &mut Stream<Token>) -> Result<ast::Block, Parse
 
 pub fn parse_function(token_stream: &mut Stream<Token>) -> Result<ast::Function, ParseError> {
     let return_typename = expect_next(token_stream)?
-        .get_ident_string()
+        .get_symbol_string()
+        .and_then(|name| {
+            match Keyword::from_str(&name) {
+                Some(_) => None, // reject keywords
+                None => Some(name),
+            }
+        })
         .ok_or(ParseError {
             reason: "invalid return typename type".to_string(),
         })?;
     let function_name = expect_next(token_stream)?
-        .get_ident_string()
+        .get_symbol_string()
+        .and_then(|name| {
+            match Keyword::from_str(&name) {
+                Some(_) => None, // reject keywords
+                None => Some(name),
+            }
+        })
         .ok_or(ParseError {
             reason: "invalid function name type".to_string(),
         })?;
@@ -101,14 +114,13 @@ pub fn parse_program(token_stream: &mut Stream<Token>) -> Result<ast::Program, P
 
 #[test]
 fn test_parser() {
-    use tokenizer::Keyword;
     let tokens = vec![
-        Token::Ident("int".to_string()),
-        Token::Ident("main".to_string()),
+        Token::Symbol("int".to_string()),
+        Token::Symbol("main".to_string()),
         Token::OpenPar,
         Token::ClosePar,
         Token::OpenCur,
-        Token::Keyword(Keyword::Return),
+        Token::Symbol("return".to_string()),
         Token::NumLiteral("0".to_string()),
         Token::Semi,
         Token::CloseCur,

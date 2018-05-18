@@ -7,35 +7,17 @@ pub enum Token {
     OpenCur,
     CloseCur,
     Semi,
-    // XXX: Unify Keyword and Ident into Symbol
-    Keyword(Keyword),
-    Ident(String),
+    Symbol(String),
     NumLiteral(String),
 }
 
 impl Token {
-    pub fn get_ident_string(self) -> Option<String> {
+    pub fn get_symbol_string(self) -> Option<String> {
         match self {
-            Token::Ident(s) => Some(s),
+            Token::Symbol(s) => Some(s),
             _ => None,
         }
     }
-}
-
-#[derive(PartialEq, Eq, Debug, Copy, Clone)]
-pub enum Keyword {
-    Return,
-}
-
-const KEYWORDS: &'static [(&'static str, Keyword)] = &[("return", Keyword::Return)];
-
-fn lookup_keyword(ident: &str) -> Option<Keyword> {
-    for &(kw_str, kw) in KEYWORDS {
-        if ident == kw_str {
-            return Some(kw);
-        }
-    }
-    return None;
 }
 
 pub fn tokenize(s: &str) -> Vec<Token> {
@@ -60,14 +42,8 @@ pub fn tokenize(s: &str) -> Vec<Token> {
                     }
                 }
                 assert!(tok.len() > 0);
-
-                tokens.push(
-                    lookup_keyword(&tok)
-                        .map(|kw| Token::Keyword(kw))
-                        .unwrap_or(Token::Ident(tok)),
-                );
+                tokens.push(Token::Symbol(tok));
             } else if ch.is_numeric() {
-                // chars.consume_while(|ch| { ch.is_numeric() })
                 let mut tok = String::new();
                 loop {
                     match chars.peek() {
@@ -126,12 +102,12 @@ fn test_tokenizer() {
 	";
 
     let exp_tokens = vec![
-        Token::Ident("int".to_string()),
-        Token::Ident("main".to_string()),
+        Token::Symbol("int".to_string()),
+        Token::Symbol("main".to_string()),
         Token::OpenPar,
         Token::ClosePar,
         Token::OpenCur,
-        Token::Keyword(Keyword::Return),
+        Token::Symbol("return".to_string()),
         Token::NumLiteral("0".to_string()),
         Token::Semi,
         Token::CloseCur,
