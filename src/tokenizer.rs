@@ -40,21 +40,17 @@ fn lookup_keyword(ident: &str) -> Option<Keyword> {
 
 pub fn tokenize(s: &str) -> Vec<Token> {
     let mut tokens = vec![];
-
     let mut chars: Stream<char> = Stream::new(s.chars().collect());
-    //let char_ary: Vec<char> = ;
-    //let chars = &char_ary;
-    //let mut pos = 0;
 
     loop {
-        if let Some(&ch) = chars.peek() {
+        if let Some(ch) = chars.peek() {
             if ch.is_whitespace() {
                 chars.skip();
             } else if ch.is_alphabetic() {
                 let mut tok = String::new();
                 loop {
                     match chars.peek() {
-                        Some(&ch) if ch.is_alphanumeric() => {
+                        Some(ch) if ch.is_alphanumeric() => {
                             chars.skip();
                             tok.push(ch);
                         }
@@ -75,7 +71,7 @@ pub fn tokenize(s: &str) -> Vec<Token> {
                 let mut tok = String::new();
                 loop {
                     match chars.peek() {
-                        Some(&ch) if ch.is_numeric() => {
+                        Some(ch) if ch.is_numeric() => {
                             chars.skip();
                             tok.push(ch);
                         }

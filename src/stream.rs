@@ -1,18 +1,19 @@
-pub struct Stream<T> {
+pub struct Stream<T: Clone> {
     ary: Vec<T>,
     pos: usize,
 }
 
-impl<T> Stream<T> {
+impl<T: Clone> Stream<T> {
     pub fn new(ary: Vec<T>) -> Self {
         Self { ary: ary, pos: 0 }
     }
+
     pub fn get_pos(&self) -> usize {
         self.pos
     }
 
-    pub fn peek(&self) -> Option<&T> {
-        self.ary.get(self.pos)
+    pub fn peek(&self) -> Option<T> {
+        self.ary.get(self.pos).map(|s| s.clone())
     }
 
     pub fn skip(&mut self) {
@@ -23,8 +24,8 @@ impl<T> Stream<T> {
         }
     }
 
-    pub fn next(&mut self) -> Option<&T> {
-        let res = self.ary.get(self.pos);
+    pub fn next(&mut self) -> Option<T> {
+        let res = self.peek();
         self.pos += 1;
         return res;
     }
