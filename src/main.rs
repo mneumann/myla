@@ -1,7 +1,8 @@
 mod ast;
+mod codegen;
 mod keyword;
 mod parser;
-mod stream;
 mod scanner;
+mod stream;
 
 fn main() {}

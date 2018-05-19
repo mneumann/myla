@@ -1,7 +1,7 @@
 use ast;
 use keyword::Keyword;
-use stream::Stream;
 use scanner::Token;
+use stream::Stream;
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct ParseError {
