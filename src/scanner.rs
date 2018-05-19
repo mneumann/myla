@@ -20,7 +20,7 @@ impl Token {
     }
 }
 
-pub fn tokenize(s: &str) -> Vec<Token> {
+pub fn scan(s: &str) -> Vec<Token> {
     let mut tokens = vec![];
     let mut chars: Stream<char> = Stream::new(s.chars().collect());
 
@@ -94,7 +94,7 @@ pub fn tokenize(s: &str) -> Vec<Token> {
 }
 
 #[test]
-fn test_tokenizer() {
+fn test_scanner() {
     let sourcecode: &str = "
 		int main() {
 			return 0;
@@ -113,7 +113,7 @@ fn test_tokenizer() {
         Token::CloseCur,
     ];
 
-    let tokens = tokenize(sourcecode);
+    let tokens = scan(sourcecode);
 
     assert_eq!(&exp_tokens[..], &tokens[..]);
 }
