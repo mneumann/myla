@@ -36,4 +36,12 @@ My experiments with programming language design.
 
 * Not tied to any particular platform (.NET, JVM).
 
+## Random ideas
+
+* Incorrectly formatted source code is rejected as compile error. This
+  leads to uniformly formatted source code, which is mandantory. A tool
+  like ```rustfmt``` can help with automatic formatting.
+
+* The compiler is primarily a library, not a CLI.
+
 [1]: http://xlr.sourceforge.net/Concept%20Programming%20Presentation.pdf
