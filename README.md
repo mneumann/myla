@@ -20,4 +20,20 @@ My experiments with programming language design.
 
 * Pony: No operator precedence, no shadowing of variables.
 
+* Concatenative languages (Kitten).
+
+* Principle of Least Surprise (Ruby).
+
+* Uniqueness types (Concurrent Clean).
+
+## Requirements
+
+* Reasonable fast (max. 2x slower than native).
+
+* Ability to compile down to C, to make bootstrapping easy.
+
+* Early-on written in itself ("Eat your own dog food").
+
+* Not tied to any particular platform (.NET, JVM).
+
 [1]: http://xlr.sourceforge.net/Concept%20Programming%20Presentation.pdf
